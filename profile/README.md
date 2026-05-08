@@ -6,38 +6,56 @@
 
 <p align="center"><strong>Define your types. We generate your backend platform.</strong></p>
 
-Supatype is a schema-first platform for frontend engineers. Write TypeScript data models — get a complete, production-ready backend: Postgres database, REST API, row-level security, auth, admin panel, realtime subscriptions, storage, and edge functions. All generated. All type-safe.
+Supatype is a schema-first platform for frontend engineers. Write TypeScript data models and get a complete, production-ready backend: Postgres database, REST API, row-level security, auth, admin panel, realtime subscriptions, storage, and edge functions. All generated. All type-safe.
 
 ```ts
 // schema/index.ts
-import { model, field, access } from '@supatype/schema'
+import type {
+  LoggedIn,
+  Model,
+  OwnerFrom,
+  Public,
+  RelatedTo,
+  RichText,
+  Role,
+  SupatypeAuthUser,
+  Timestamp,
+  UUID,
+} from '@supatype/types'
 
-export const Post = model('post', {
-  fields: {
-    title:     field.text({ required: true }),
-    body:      field.richText(),
-    cover:     field.image(),
-    published: field.boolean({ default: false }),
+export type Post = Model<
+  {
+    id: UUID
+    title: string
+    body: RichText
+    published: boolean
+    authUser: RelatedTo<SupatypeAuthUser>
+    created_at: Timestamp
+    updated_at: Timestamp
   },
-  access: {
-    read:   access.public(),
-    write:  access.owner(),
-  },
-})
+  {
+    access: {
+      read: Public
+      create: LoggedIn
+      update: OwnerFrom<'authUser'>
+      delete: Role<'admin'>
+    }
+  }
+>
 ```
 
 ```bash
-npx supatype push   # applies migrations, generates types, deploys RLS
+npx supatype push   # applies migrations, generates types, updates RLS
 ```
 
-That's it. Your Postgres schema, PostgREST API, TypeScript client, and admin panel are live.
+That's it. Your Postgres schema, PostgREST API, generated TypeScript types, and admin panel are live.
 
 ---
 
 ## How it works
 
 ```
-TypeScript schema definition
+TypeScript model types (Model<…>)
         │
         ▼
   ┌─────────────────┐
@@ -61,7 +79,7 @@ The schema engine is the core of Supatype — a Rust binary that introspects you
 ## Features
 
 **Schema-driven everything**
-One TypeScript file is canonical. The database, API, types, policies, and admin UI are all derived from it and stay in sync.
+Export `Model<…>` types and storage `Bucket<…>` types from a single module. The database, API, generated types, policies, and admin UI are all derived from them and stay in sync.
 
 **Type-safe client SDK**
 `@supatype/client` wraps PostgREST with full TypeScript inference. Query, mutate, subscribe — all typed end-to-end from your schema.
@@ -75,10 +93,12 @@ const { data } = await client.from('post').select('*').eq('published', true)
 Declarative access control in your schema compiles to Postgres RLS policies. Security lives at the database, not in middleware.
 
 ```ts
+// second type argument on Model<Fields, { access: … }>
 access: {
-  read:   access.public(),
-  write:  access.owner(),         // enforced in Postgres, not just your API
-  delete: access.role('editor'),
+  read: Public,
+  create: LoggedIn, // enforced in Postgres, not just your API
+  update: OwnerFrom<'authUser'>,
+  delete: Role<'editor'>,
 }
 ```
 
@@ -128,7 +148,7 @@ Forks your database, applies schema changes in isolation, reports data-aware mig
 
 | Repo                                             | Description                                                            | Visibility |
 | ------------------------------------------------ | ---------------------------------------------------------------------- | ---------- |
-| [supatype](https://github.com/supatype/supatype) | TypeScript monorepo — schema SDK, client, React hooks, CLI, studio     | Public     |
+| [supatype](https://github.com/supatype/supatype) | TypeScript monorepo — `@supatype/types` (`Model<…>`), client, React hooks, CLI, studio | Public     |
 | `supatype-schema-engine`                         | Rust schema engine — parser, differ, SQL/type/RLS generator            | Private    |
 | `supatype-server`                                | Go unified server — GoTrue auth + PostgREST + realtime + storage proxy | Public     |
 | `supatype-postgres`                              | Hardened Postgres distribution with pg_guard and extensions            | Public     |
@@ -150,7 +170,7 @@ supatype dev        # starts Postgres, API gateway, auth, storage, studio
 **Install the client**
 
 ```bash
-npm install @supatype/client @supatype/react
+npm install @supatype/types @supatype/client @supatype/react
 ```
 
 ```ts
