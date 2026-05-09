@@ -68,7 +68,7 @@ TypeScript model types (Model<…>)
         ├── TypeScript types + client SDK
         ├── Row-level security policies
         ├── Admin panel configuration
-        ├── PostgREST + Kong config
+        ├── PostgREST + gateway / routing config (where applicable)
         └── Realtime trigger functions
 ```
 
@@ -114,7 +114,7 @@ const posts = useQuery('post', { filter: { published: true } })
 ```
 
 **Auth built in**
-GoTrue-backed auth with JWT middleware in Kong. `client.auth.signUp()`, `client.auth.signInWithPassword()`, OAuth flows, and `useAuth()` React hook — wired from day one.
+JWT-based auth is served by **`supatype-server`** on the same port as the rest of the API (`/auth/v1/…`). `client.auth.signUp()`, `client.auth.signInWithPassword()`, OAuth flows, and the `useAuth()` React hook — wired from day one.
 
 **Storage**
 S3-compatible object storage with image transforms, signed URLs, and schema-defined buckets. Image and file fields in your schema automatically provision storage buckets with matching RLS.
@@ -150,7 +150,7 @@ Forks your database, applies schema changes in isolation, reports data-aware mig
 | ------------------------------------------------ | ---------------------------------------------------------------------- | ---------- |
 | [supatype](https://github.com/supatype/supatype) | TypeScript monorepo — `@supatype/types` (`Model<…>`), client, React hooks, CLI, studio | Public     |
 | `supatype-schema-engine`                         | Rust schema engine — parser, differ, SQL/type/RLS generator            | Private    |
-| `supatype-server`                                | Go unified server — GoTrue auth + PostgREST + realtime + storage proxy | Public     |
+| `supatype-server`                                | Go **unified gateway** — PostgREST, auth (`/auth/v1/`), storage, realtime, and related routes on one process | Public     |
 | `supatype-postgres`                              | Hardened Postgres distribution with pg_guard and extensions            | Public     |
 
 
@@ -158,13 +158,16 @@ Forks your database, applies schema changes in isolation, reports data-aware mig
 
 ## Getting started
 
-**Local dev (Docker Compose)**
+**Local development (CLI)**
+
+Local dev is driven by the **`supatype` CLI** (`pnpm supatype` in the monorepo, or install **`@supatype/cli`** globally). You do **not** need to run a root-level `docker-compose` stack by hand: `supatype dev` starts Postgres (Docker **or** native per `supatype.config.ts`), pulls the engine/server binaries, applies your schema, and runs **`supatype-server`** as the unified gateway (REST, auth, storage, realtime).
 
 ```bash
-npm install -g supatype
+npm install -g @supatype/cli
 supatype init my-app
 cd my-app
-supatype dev        # starts Postgres, API gateway, auth, storage, studio
+# add a package.json with @supatype/cli + @supatype/types, then install deps
+supatype dev        # Postgres + supatype-server (+ optional Studio when configured)
 ```
 
 **Install the client**
@@ -221,7 +224,7 @@ The schema engine binary is distributed separately and requires a licence for pr
 
 **Schema is source of truth.** The database is derived, never the master copy. You define types; infrastructure follows.
 
-**Use battle-tested components.** Supatype orchestrates PostgREST, GoTrue, Kong, MinIO, and Deno — it doesn't reinvent them. The value is in the schema engine and the integration layer.
+**Use battle-tested components.** Supatype orchestrates PostgREST, storage (S3-compatible), Deno for edge functions, and related pieces behind **`supatype-server`** — it doesn't reinvent SQL or your database. The value is in the schema engine and the integration layer.
 
 **Escape hatches everywhere.** Raw SQL, custom migrations, manual PostgREST config, direct Postgres access — the platform never fights you.
 
