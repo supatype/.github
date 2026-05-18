@@ -160,15 +160,24 @@ Forks your database, applies schema changes in isolation, reports data-aware mig
 
 **Local development (CLI)**
 
-Local dev is driven by the **`supatype` CLI** (`pnpm supatype` in the monorepo, or install **`@supatype/cli`** globally). You do **not** need to run a root-level `docker-compose` stack by hand: `supatype dev` starts Postgres (Docker **or** native per `supatype.config.ts`), pulls the engine/server binaries, applies your schema, and runs **`supatype-server`** as the unified gateway (REST, auth, storage, realtime).
+`supatype dev` runs **native** engine + **supatype-server** binaries. Postgres is **native by default**, or **Docker for Postgres only** when `database.provider: "docker"` in `supatype.config.ts`.
 
 ```bash
 npm install -g @supatype/cli
-supatype init my-app
-cd my-app
-# add a package.json with @supatype/cli + @supatype/types, then install deps
-supatype dev        # Postgres + supatype-server (+ optional Studio when configured)
+mkdir my-app && cd my-app
+# package.json with @supatype/cli + @supatype/types — see supatype/docs/GETTING-STARTED.md
+supatype init
+supatype keys
+supatype dev
 ```
+
+**Self-host (Docker Compose on your VPS)**
+
+```bash
+supatype self-host compose up -d
+```
+
+Images on Docker Hub default to **`:latest`**: `supatype/postgres:17-latest`, **`supatype/server`**, `supatype/storage`, `supatype/realtime`, `supatype/studio`, `supatype/schema-engine`. Guide: [supatype.github.io/supatype](https://supatype.github.io/supatype/#self-host).
 
 **Install the client**
 
@@ -197,7 +206,7 @@ Coming soon.
 
 | Plan           | Price   | For                              |
 | -------------- | ------- | -------------------------------- |
-| **Starter**    | TBC  | Hobby and prototype projects     |
+| **Starter**    | FREE  | Hobby and prototype projects     |
 | **Pro**        | TBC  | Production apps and small teams  |
 | **Team**       | TBC | Growing teams, multiple projects |
 | **Enterprise** | Custom  | SOC 2, HIPAA, dedicated support  |
@@ -209,14 +218,9 @@ Self-hosting is always free.
 
 ## Self-hosting
 
-Supatype runs entirely on-premises. No cloud dependency, no licence keys for the open-source packages.
+Self-host is **Docker Compose only** (`supatype self-host compose`). Dev uses native binaries.
 
-```bash
-supatype self-host install   # installs systemd services
-supatype self-host serve     # starts Postgres + server
-```
-
-The schema engine binary is distributed separately and requires a licence for production self-hosted deployments at scale. Community (development) use is free.
+The schema engine is distributed as a binary (CDN) and a container image for Compose. Licensing for large-scale production is described in the schema-engine repo; community dev use is free.
 
 ---
 
