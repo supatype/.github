@@ -6,7 +6,7 @@
 
 <p align="center"><strong>Define your types. We generate your backend platform.</strong></p>
 
-Supatype is a schema-first platform for frontend engineers. Write TypeScript data models and get a complete, production-ready backend: Postgres database, REST API, row-level security, auth, admin panel, realtime subscriptions, storage, and edge functions. All generated. All type-safe.
+Supatype is a type-first backend platform for PostgreSQL. Write your data models as TypeScript types and get the rest generated from them: migrations, row-level security, a REST and GraphQL API, auth, storage, realtime, edge functions and a Studio CMS. It is self-hostable by default, and every layer stays type-safe.
 
 ```ts
 // schema/index.ts
@@ -48,7 +48,7 @@ export type Post = Model<
 npx supatype push   # applies migrations, generates types, updates RLS
 ```
 
-That's it. Your Postgres schema, PostgREST API, generated TypeScript types, and admin panel are live.
+Your Postgres schema, API, generated types and Studio are now live.
 
 ---
 
@@ -59,17 +59,17 @@ TypeScript model types (Model<…>)
         │
         ▼
   ┌─────────────────┐
-  │  Schema Engine  │  (Rust — closed source)
+  │  Schema Engine  │  (Rust, proprietary)
   │  Parser → Diff  │
   │  → SQL + Types  │
   └─────────────────┘
         │
         ├── SQL migrations + rollbacks
-        ├── TypeScript types + client SDK
-        ├── Row-level security policies
-        ├── Admin panel configuration
-        ├── PostgREST + gateway / routing config (where applicable)
-        └── Realtime trigger functions
+        ├── Row-level security, grants + column privileges
+        ├── TypeScript types + typed SDKs in seven languages
+        ├── OpenAPI spec
+        ├── Studio / admin panel metadata
+        └── Gateway + realtime config
 ```
 
 The schema engine is the core of Supatype — a Rust binary that introspects your Postgres database, computes a safe diff against your schema, and generates everything downstream. It ships as a compiled binary; your schema is always the source of truth.
@@ -81,8 +81,8 @@ The schema engine is the core of Supatype — a Rust binary that introspects you
 **Schema-driven everything**
 Export `Model<…>` types and storage `Bucket<…>` types from a single module. The database, API, generated types, policies, and admin UI are all derived from them and stay in sync.
 
-**Type-safe client SDK**
-`@supatype/client` wraps PostgREST with full TypeScript inference. Query, mutate, subscribe — all typed end-to-end from your schema.
+**Type-safe clients**
+`@supatype/client` wraps PostgREST with full TypeScript inference. Query, mutate, subscribe — all typed end-to-end from your schema. Bindings ship for React, React Native, Vue, Svelte and Solid, with SSR helpers. The engine also generates typed SDKs for Python, Go, PHP, Swift, Kotlin and Dart.
 
 ```ts
 const { data } = await client.from('post').select('*').eq('published', true)
@@ -103,7 +103,7 @@ access: {
 ```
 
 **Auto-generated admin panel**
-`@supatype/studio` provides a full CMS-style admin interface — content management, data explorer, SQL runner, auth management, storage browser, migration history, logs, and API docs — all generated from your schema. No configuration required.
+`@supatype/studio` provides a full CMS-style admin interface — content management, data explorer, SQL runner, auth management, storage browser, migration history, logs, and API docs — all generated from your schema. Models can set their own Studio labels, and the plugin SDK adds custom field types (SEO, colour picker and phone fields ship today).
 
 **Realtime subscriptions**
 WebSocket-based live queries, RLS-aware, with React hooks:
@@ -122,37 +122,21 @@ S3-compatible object storage with image transforms, signed URLs, and schema-defi
 **Edge functions**
 Deno-based edge functions via `supatype functions deploy`. Runs alongside your other services, accessible from the same API gateway.
 
-**AI-powered schema generation** *(Phase 15)*
-
-```bash
-npx supatype ai init "a multi-tenant SaaS with teams, projects, and comments"
-```
-
-Generates a complete, production-ready schema with models, relations, access rules, and composites.
-
-**MCP server** *(Phase 15.5)*
-Expose your project as an MCP-compliant server. Claude, Cursor, and other AI agents get type-safe, permission-aware tools for CRUD and custom actions — zero additional configuration.
-
-**Schema-aware branching** *(Phase 22)*
-
-```bash
-npx supatype branch create feature/add-tags
-```
-
-Forks your database, applies schema changes in isolation, reports data-aware migration impact. On cloud, every PR gets a live preview environment.
+**Hardened Postgres**
+[`supatype/postgres`](https://github.com/supatype/postgres) is PostgreSQL 17 with PostGIS, pgvector, pg_graphql, pg_cron, pg_net and more, plus extensions of our own: `pg_guard` (privilege enforcement), `supatype_mask` (per-column masking enforced in the planner), `pg_keyspace` (a Redis/Valkey-compatible keyspace and row cache) and `pg_topics` (Kafka-protocol topics with no broker to run).
 
 ---
 
 ## Repositories
 
 
-| Repo                                             | Description                                                            | Visibility |
-| ------------------------------------------------ | ---------------------------------------------------------------------- | ---------- |
-| [supatype](https://github.com/supatype/supatype) | TypeScript monorepo — `@supatype/types` (`Model<…>`), client, React hooks, CLI, studio | Public     |
-| `supatype-schema-engine`                         | Rust schema engine — parser, differ, SQL/type/RLS generator            | Private    |
-| `supatype-server`                                | Go **unified gateway** — PostgREST, auth (`/auth/v1/`), storage, realtime, and related routes on one process | Public     |
-| `supatype-postgres`                              | Hardened Postgres distribution with pg_guard and extensions            | Public     |
-
+| Repo                                                     | Description                                                                                            | Visibility |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ---------- |
+| [supatype](https://github.com/supatype/supatype)         | TypeScript monorepo: `@supatype/types`, client, framework bindings, CLI, Studio, storage, realtime      | Public     |
+| [server](https://github.com/supatype/server)             | Go unified gateway: PostgREST, auth (`/auth/v1/`), storage, realtime and related routes in one process | Public     |
+| [postgres](https://github.com/supatype/postgres)         | PostgreSQL 17 distribution with hardening and bundled extensions                                        | Public     |
+| [homebrew-tap](https://github.com/supatype/homebrew-tap) | Homebrew formulae                                                                                      | Public     |
+| `schema-engine`                                          | Rust schema engine: parser, differ, SQL / type / RLS / SDK generators                                  | Private    |
 
 ---
 
@@ -165,7 +149,6 @@ Forks your database, applies schema changes in isolation, reports data-aware mig
 ```bash
 npm install -g @supatype/cli
 mkdir my-app && cd my-app
-# package.json with @supatype/cli + @supatype/types — see supatype/docs/GETTING-STARTED.md
 supatype init
 supatype keys
 supatype dev
@@ -177,7 +160,7 @@ supatype dev
 supatype self-host compose up -d
 ```
 
-Images on Docker Hub default to **`:latest`**: `supatype/postgres:17-latest`, **`supatype/server`**, `supatype/storage`, `supatype/realtime`, `supatype/studio`, `supatype/schema-engine`. Guide: [supatype.github.io/supatype](https://supatype.github.io/supatype/#self-host).
+Images on Docker Hub default to **`:latest`**: `supatype/postgres:17-latest`, **`supatype/server`**, `supatype/storage`, `supatype/realtime`, `supatype/studio`, `supatype/schema-engine`. Guide: [supatype.com/#self-host](https://www.supatype.com/#self-host).
 
 **Install the client**
 
@@ -197,7 +180,7 @@ export const client = createClient<Database>({
 
 **Cloud**
 
-Coming soon.
+Supatype Cloud is in early access.
 
 ---
 
@@ -238,6 +221,6 @@ The schema engine is distributed as a binary (CDN) and a container image for Com
 
 ## Status
 
-Supatype is in active development. Core schema engine, client SDK, studio, realtime, storage, auth, and CLI are production-ready. Cloud platform is in early access.
+Supatype is in active development. The schema engine, client SDK, Studio, realtime, storage, auth and CLI are production-ready. Supatype Cloud is in early access.
 
-[Discord](https://discord.gg/supatype)
+[Website](https://www.supatype.com/) · [Discord](https://discord.gg/TzMtynufEH)
