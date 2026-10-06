@@ -207,6 +207,17 @@ The schema engine is distributed as a binary (CDN) and a container image for Com
 
 ---
 
+## License
+
+- **MIT:** the client SDK, `@supatype/types`, framework bindings, SSR helpers, auth UI and plugins (the code you ship in your app), plus [`supatype/server`](https://github.com/supatype/server).
+- **Apache 2.0:** the CLI and the Studio, storage and realtime services.
+- **PostgreSQL License:** [`supatype/postgres`](https://github.com/supatype/postgres).
+- **Proprietary:** the schema engine binary.
+
+Each repo's and package's `LICENSE` file is authoritative.
+
+---
+
 ## Philosophy
 
 **Schema is source of truth.** The database is derived, never the master copy. You define types; infrastructure follows.
